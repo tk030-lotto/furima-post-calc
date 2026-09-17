@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <rect width="64" height="64" rx="14" fill="#09090b"/>
+  <rect x="2" y="2" width="60" height="60" rx="12" fill="none" stroke="#27272a" stroke-width="2"/>
+  <!-- 荷物ボックス -->
+  <path d="M32 14 L50 23 L32 32 L14 23 Z" fill="#f59e0b"/>
+  <path d="M14 23 L32 32 L32 49 L14 40 Z" fill="#d97706"/>
+  <path d="M50 23 L32 32 L32 49 L50 40 Z" fill="#b45309"/>
+  <!-- エメラルドテープ/チェックマーク -->
+  <path d="M28 21 L36 25 L36 34 L28 30 Z" fill="#10b981" opacity="0.9"/>
+  <circle cx="46" cy="46" r="10" fill="#10b981"/>
+  <path d="M42 46 L45 49 L51 43" fill="none" stroke="#ffffff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

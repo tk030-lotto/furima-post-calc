@@ -1,0 +1,42 @@
+name: Deploy GitHub Pages
+
+# リポジトリ設定 (Settings > Pages) で Source を "GitHub Actions" に設定することで公開されます。
+# 明示的に公開するまで自動公開は実行されません（手動実行トリガー対応）。
+
+on:
+  workflow_dispatch: # GitHub画面からの手動実行
+  push:
+    branches: ["main"] # mainブランチ更新時に反映
+
+# Pagesへのデプロイ権限を設定
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# 同時デプロイの競合を防止
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: '.'
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
