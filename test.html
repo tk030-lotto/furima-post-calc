@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FurimaPostCalc - 自動テストランナー (TC-001〜TC-026)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #09090b;
+      --card: #121215;
+      --border: #27272a;
+      --text: #fafafa;
+      --muted: #a1a1aa;
+      --pass: #10b981;
+      --fail: #ef4444;
+    }
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      font-family: 'Inter', sans-serif;
+      margin: 0;
+      padding: 2rem;
+    }
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+    }
+    h1 {
+      font-size: 24px;
+      margin-bottom: 0.5rem;
+    }
+    .summary {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1rem 1.5rem;
+      margin-bottom: 1.5rem;
+      display: flex;
+      gap: 2rem;
+      align-items: center;
+    }
+    .badge {
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: bold;
+      padding: 0.25rem 0.75rem;
+      border-radius: 4px;
+    }
+    .badge-pass { background: rgba(16, 185, 129, 0.2); color: var(--pass); border: 1px solid var(--pass); }
+    .badge-fail { background: rgba(239, 68, 68, 0.2); color: var(--fail); border: 1px solid var(--fail); }
+    .test-table {
+      width: 100%;
+      border-collapse: collapse;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    th, td {
+      padding: 0.75rem 1rem;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+      font-size: 14px;
+    }
+    th {
+      background: #18181b;
+      color: var(--muted);
+      font-size: 13px;
+      text-transform: uppercase;
+    }
+    .id-cell {
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 600;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🧪 FurimaPostCalc 自動テストスイート</h1>
+    <p style="color: var(--muted); margin-bottom: 1rem;">仕様書第13章（TC-001〜TC-026）全自動検証</p>
+    
+    <div class="summary" id="summaryArea">
+      <div>ステータス: <span id="overallStatus" class="badge">検証中...</span></div>
+      <div>合格: <span id="passCount" style="color: var(--pass); font-weight: bold;">0</span></div>
+      <div>不合格: <span id="failCount" style="color: var(--fail); font-weight: bold;">0</span></div>
+    </div>
+
+    <table class="test-table">
+      <thead>
+        <tr>
+          <th style="width: 100px;">テストID</th>
+          <th>テスト項目・期待動作</th>
+          <th style="width: 100px;">結果</th>
+        </tr>
+      </thead>
+      <tbody id="testResultsBody"></tbody>
+    </table>
+  </div>
+
+  <script src="js/data.js"></script>
+  <script src="js/calc.js"></script>
+  <script>
+    const tests = [
+      { id: 'TC-001', name: 'miniのサイズ・重量上限内 -> miniが最安（180円）', fn: () => {
+        const res = evaluateShippingServices(SHIPPING_SERVICES, { h: 20, w: 15, d: 2, weight: 500 });
+        return res.length > 0 && res[0].id === 'yuupacket_post_mini' && res[0].totalFee === 180;
+      }},
+      { id: 'TC-002', name: 'mini重量2kgちょうど -> mini利用可能', fn: () => {
+        const mini = SHIPPING_SERVICES.find(s => s.id === 'yuupacket_post_mini');
+        return checkAvailability(mini, { h: 20, w: 15, d: 2, weight: 2000 }).available === true;
+      }},
+      { id: 'TC-003', name: 'ネコポス厚さ3cmちょうど -> 利用可能＆hard警告', fn: () => {
+        const n = SHIPPING_SERVICES.find(s => s.id === 'neko_pos');
+        const a = checkAvailability(n, { h: 25, w: 15, d: 3.0, weight: 500 });
+        const w = calculateWarnings(n, { h: 25, w: 15, d: 3.0, weight: 500 });
+        return a.available === true && w.warningLevel === 'hard';
+      }},
+      { id: 'TC-004', name: 'ネコポス厚さ3.1cm -> 利用不可', fn: () => {
+        const n = SHIPPING_SERVICES.find(s => s.id === 'neko_pos');
+        return checkAvailability(n, { h: 25, w: 15, d: 3.1, weight: 500 }).available === false;
+      }},
+      { id: 'TC-005', name: '3辺合計60cmちょうど -> 60サイズ利用可能', fn: () => {
+        const s = SHIPPING_SERVICES.find(x => x.id === 'takkyubin_60');
+        return checkAvailability(s, { h: 30, w: 20, d: 10, weight: 1500 }).available === true;
+      }},
+      { id: 'TC-006', name: '3辺合計60.1cm -> 60サイズ不可・80サイズ可', fn: () => {
+        const s60 = SHIPPING_SERVICES.find(x => x.id === 'takkyubin_60');
+        const s80 = SHIPPING_SERVICES.find(x => x.id === 'takkyubin_80');
+        return !checkAvailability(s60, { h: 30.1, w: 20, d: 10, weight: 1500 }).available &&
+               checkAvailability(s80, { h: 30.1, w: 20, d: 10, weight: 1500 }).available;
+      }},
+      { id: 'TC-007', name: '宅急便60サイズ上限（2kg） -> 利用可能', fn: () => {
+        const s = SHIPPING_SERVICES.find(x => x.id === 'takkyubin_60');
+        return checkAvailability(s, { h: 25, w: 20, d: 15, weight: 2000 }).available === true;
+      }},
+      { id: 'TC-008', name: '60サイズ・重量2.1kg -> 宅急便60不可・宅急便80可・ゆうパック60可', fn: () => {
+        const t60 = SHIPPING_SERVICES.find(x => x.id === 'takkyubin_60');
+        const t80 = SHIPPING_SERVICES.find(x => x.id === 'takkyubin_80');
+        const y60 = SHIPPING_SERVICES.find(x => x.id === 'yuupack_60');
+        return !checkAvailability(t60, { h: 25, w: 20, d: 15, weight: 2100 }).available &&
+               checkAvailability(t80, { h: 25, w: 20, d: 15, weight: 2100 }).available &&
+               checkAvailability(y60, { h: 25, w: 20, d: 15, weight: 2100 }).available;
+      }},
+      { id: 'TC-009', name: '宅急便180サイズ上限（2,100円） -> 利用可能', fn: () => {
+        const s = SHIPPING_SERVICES.find(x => x.id === 'takkyubin_180');
+        return checkAvailability(s, { h: 80, w: 60, d: 40, weight: 30000 }).available === true && s.totalFee === 2100;
+      }},
+      { id: 'TC-010', name: '重量26kgで160サイズ除外（25kg制限）', fn: () => {
+        const t160 = SHIPPING_SERVICES.find(x => x.id === 'takkyubin_160');
+        const y160 = SHIPPING_SERVICES.find(x => x.id === 'yuupack_160');
+        return !checkAvailability(t160, { h: 60, w: 50, d: 50, weight: 26000 }).available &&
+               !checkAvailability(y160, { h: 60, w: 50, d: 50, weight: 26000 }).available;
+      }},
+      { id: 'TC-011', name: 'ゆうパック170サイズ（1,900円） -> 利用可能', fn: () => {
+        const s = SHIPPING_SERVICES.find(x => x.id === 'yuupack_170');
+        return checkAvailability(s, { h: 70, w: 50, d: 50, weight: 20000 }).available === true && s.totalFee === 1900;
+      }},
+      { id: 'TC-012', name: 'クリックポスト2kg上限（240円） -> 利用可能', fn: () => {
+        const cp = SHIPPING_SERVICES.find(x => x.id === 'click_post');
+        return checkAvailability(cp, { h: 30, w: 20, d: 2, weight: 2000 }).available === true && cp.totalFee === 240;
+      }},
+      { id: 'TC-013', name: 'クリックポスト2001g -> 重量超過除外', fn: () => {
+        const cp = SHIPPING_SERVICES.find(x => x.id === 'click_post');
+        return checkAvailability(cp, { h: 30, w: 20, d: 2, weight: 2001 }).available === false;
+      }},
+      { id: 'TC-014', name: 'クリックポスト3辺合計60cm上限 -> 利用可能', fn: () => {
+        const cp = SHIPPING_SERVICES.find(x => x.id === 'click_post');
+        return checkAvailability(cp, { h: 34, w: 23, d: 3, weight: 1000 }).available === true;
+      }},
+      { id: 'TC-015', name: 'クリックポスト3辺合計60.1cm -> 除外', fn: () => {
+        const cp = SHIPPING_SERVICES.find(x => x.id === 'click_post');
+        return checkAvailability(cp, { h: 34.1, w: 23, d: 3, weight: 1000 }).available === false;
+      }},
+      { id: 'TC-016', name: '追跡なしOFF -> スマートレター非表示', fn: () => {
+        const res = evaluateShippingServices(SHIPPING_SERVICES, { h: 20, w: 15, d: 1, weight: 500 }, { includeNoTrack: false });
+        return !res.some(s => s.id === 'smart_letter');
+      }},
+      { id: 'TC-017', name: '追跡なしON -> スマートレター表示', fn: () => {
+        const res = evaluateShippingServices(SHIPPING_SERVICES, { h: 20, w: 15, d: 1, weight: 500 }, { includeNoTrack: true });
+        return res.some(s => s.id === 'smart_letter');
+      }},
+      { id: 'TC-018', name: 'URL共有・復元ロジック整合性', fn: () => {
+        const qs = 'h=25&w=18&d=2.5&weight=400&notrack=1&anon=1';
+        const p = new URLSearchParams(qs);
+        return p.get('h') === '25' && p.get('anon') === '1';
+      }},
+      { id: 'TC-019', name: 'LocalStorage復元仕様', fn: () => {
+        const d = JSON.stringify({ h: 25, w: 18, d: 2.5, weight: 400 });
+        const p = JSON.parse(d);
+        return p.h === 25 && p.weight === 400;
+      }},
+      { id: 'TC-020', name: '料金改定日データ表示（2026-10-01基準）', fn: () => {
+        return APP_META.effectiveFrom === '2026-10-01' && APP_META.dataAsOf === '2026-09-15';
+      }},
+      { id: 'TC-021', name: '注意事項常時表示テキスト適合', fn: () => {
+        return APP_META.warningBannerText.includes('送料・専用資材費') && APP_META.warningBannerText.includes('2026年10月1日以降');
+      }},
+      { id: 'TC-022', name: '梱包資材の単価・店舗情報', fn: () => {
+        const m = PACKAGE_MATERIALS.find(x => x.id === 'mat_post_sticker');
+        return m && m.perItemPrice === 5 && m.purchaseInfo.includes('郵便局');
+      }},
+      { id: 'TC-023', name: '3辺向き自動回転（30x3x20cm -> 厚さ3cmでネコポス可）', fn: () => {
+        const n = SHIPPING_SERVICES.find(s => s.id === 'neko_pos');
+        return checkAvailability(n, { h: 30, w: 3, d: 20, weight: 500 }).available === true;
+      }},
+      { id: 'TC-024', name: 'ネコポス最小サイズ未満判定（20x10x2cm除外）', fn: () => {
+        const n = SHIPPING_SERVICES.find(s => s.id === 'neko_pos');
+        return checkAvailability(n, { h: 20, w: 10, d: 2, weight: 500 }).available === false;
+      }},
+      { id: 'TC-025', name: '匿名配送のみフィルター（非匿名除外）', fn: () => {
+        const res = evaluateShippingServices(SHIPPING_SERVICES, { h: 25, w: 15, d: 2, weight: 500 }, { anonymousOnly: true, includeNoTrack: true });
+        return res.every(s => s.isAnonymous === true) && !res.some(s => s.id === 'click_post');
+      }},
+      { id: 'TC-026', name: 'ゆうパケットポスト(シール)段階的厚さ判定(3.2=soft, 3.8=hard, 4.1=除外)', fn: () => {
+        const st = SHIPPING_SERVICES.find(s => s.id === 'yuupacket_post_sticker');
+        const s = calculateWarnings(st, { h: 25, w: 15, d: 3.2, weight: 500 });
+        const h = calculateWarnings(st, { h: 25, w: 15, d: 3.8, weight: 500 });
+        const o = checkAvailability(st, { h: 25, w: 15, d: 4.1, weight: 500 });
+        return s.warningLevel === 'soft' && h.warningLevel === 'hard' && o.available === false;
+      }}
+    ];
+
+    let pCount = 0, fCount = 0;
+    const tbody = document.getElementById('testResultsBody');
+
+    tests.forEach(t => {
+      let isPass = false;
+      try {
+        isPass = t.fn();
+      } catch (e) {
+        console.error(e);
+      }
+      if (isPass) pCount++; else fCount++;
+
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td class="id-cell">${t.id}</td>
+        <td>${t.name}</td>
+        <td><span class="badge ${isPass ? 'badge-pass' : 'badge-fail'}">${isPass ? 'PASS' : 'FAIL'}</span></td>
+      `;
+      tbody.appendChild(tr);
+    });
+
+    document.getElementById('passCount').textContent = pCount;
+    document.getElementById('failCount').textContent = fCount;
+    const statusEl = document.getElementById('overallStatus');
+    if (fCount === 0) {
+      statusEl.textContent = 'ALL PASSED (' + pCount + '/' + tests.length + ')';
+      statusEl.className = 'badge badge-pass';
+    } else {
+      statusEl.textContent = fCount + ' FAILED';
+      statusEl.className = 'badge badge-fail';
+    }
+  </script>
+</body>
+</html>

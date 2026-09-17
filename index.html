@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="ja" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="メルカリ・フリマ出品者専用の送料・梱包サイズ判定ツール。縦・横・厚さ・重量から利用可能な配送方法を自動判定し、専用資材代を含めた実質総額の最安順に比較します。2026年10月改定対応。">
+  <title>FurimaPostCalc - メルカリ・フリマ専用：送料・梱包サイズ判定ツール（2026年10月改定対応）</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <!-- 最上部常時注意喚起バナー（仕様書第3.1条・第10.4条準拠） -->
+  <aside class="alert-banner" role="alert">
+    <span>⚠️</span>
+    <div>
+      <strong>【重要・必ずご確認ください】</strong>
+      送料および専用資材の価格・規格は、改定や購入店舗（郵便局・コンビニ・営業所・100均等）により実際の金額と異なる場合があります。本ツールは2026年10月1日以降の基準に基づく参考目安です。発送・資材購入の前には必ず公式情報や店頭表示をご確認ください。
+    </div>
+  </aside>
+
+  <header>
+    <div class="header-inner">
+      <div class="brand-title">
+        <span>📦</span>
+        <span>FurimaPostCalc</span>
+        <span class="brand-badge">2026年10月改定対応</span>
+      </div>
+      <div class="header-actions">
+        <button id="themeToggleBtn" class="btn" type="button" title="テーマ切り替え" aria-label="テーマ切り替え">
+          <span id="themeIcon">☀️</span>
+        </button>
+        <button id="copyUrlBtn" class="btn" type="button" title="現在の条件URLをコピー">
+          <span>🔗</span>
+          <span>条件を共有</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    <!-- 左ペイン: 入力・設定 -->
+    <section class="input-pane">
+      <div class="card">
+        <div class="card-header">
+          <h2 class="card-title">📦 サイズ・重量入力</h2>
+          <button id="resetBtn" class="btn" style="padding: 0.25rem 0.65rem; font-size: 13px;" type="button">クリア</button>
+        </div>
+
+        <form id="calcForm" onsubmit="event.preventDefault();">
+          <div class="form-group">
+            <label class="form-label" for="inputHeight">縦（cm）</label>
+            <div class="input-with-unit">
+              <input type="number" id="inputHeight" class="input-field" step="0.1" min="0.1" max="250" placeholder="例: 25.0" required>
+              <span class="input-unit">cm</span>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="inputWidth">横（cm）</label>
+            <div class="input-with-unit">
+              <input type="number" id="inputWidth" class="input-field" step="0.1" min="0.1" max="250" placeholder="例: 18.0" required>
+              <span class="input-unit">cm</span>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="inputDepth">厚さ（cm）</label>
+            <div class="input-with-unit">
+              <input type="number" id="inputDepth" class="input-field" step="0.1" min="0.1" max="100" placeholder="例: 2.5" required>
+              <span class="input-unit">cm</span>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="inputWeight">梱包後重量（g）</label>
+            <div class="input-with-unit">
+              <input type="number" id="inputWeight" class="input-field" step="1" min="1" max="30000" placeholder="例: 450" required>
+              <span class="input-unit">g</span>
+            </div>
+          </div>
+
+          <!-- 自動幾何判定サマリー -->
+          <div class="dimensions-summary" id="dimSummary" aria-live="polite">
+            <div><span class="dim-tag">長辺:</span> <span class="dim-val" id="valL1">-</span></div>
+            <div><span class="dim-tag">中辺:</span> <span class="dim-val" id="valL2">-</span></div>
+            <div><span class="dim-tag">厚さ:</span> <span class="dim-val" id="valL3">-</span></div>
+            <div><span class="dim-tag">合計:</span> <span class="dim-val" id="valSum">-</span></div>
+          </div>
+        </form>
+
+        <!-- クイックプリセット -->
+        <div style="margin-top: 1.25rem;">
+          <div class="form-label"><span>💡 定番プリセット</span></div>
+          <div class="presets-grid">
+            <button type="button" class="btn-preset" data-h="15.0" data-w="10.5" data-d="1.5" data-weight="180">📖 文庫本 1冊</button>
+            <button type="button" class="btn-preset" data-h="19.0" data-w="13.5" data-d="1.5" data-weight="150">💿 DVD / ゲーム</button>
+            <button type="button" class="btn-preset" data-h="30.0" data-w="22.0" data-d="2.5" data-weight="250">👕 薄手Tシャツ・服</button>
+            <button type="button" class="btn-preset" data-h="24.0" data-w="16.0" data-d="4.5" data-weight="600">📦 厚手本・コスメ</button>
+            <button type="button" class="btn-preset" data-h="32.0" data-w="20.0" data-d="12.0" data-weight="1200">👟 スニーカー箱</button>
+            <button type="button" class="btn-preset" data-h="38.0" data-w="28.0" data-d="20.0" data-weight="3500">📻 小型家電・雑貨</button>
+          </div>
+        </div>
+
+        <!-- フィルタ設定 -->
+        <div style="margin-top: 1.25rem; border-top: 1px solid var(--border-color); padding-top: 0.75rem;">
+          <div class="toggle-item">
+            <label class="toggle-label" for="filterAnonymous">🔒 匿名配送のみ表示（メルカリ便）</label>
+            <label class="switch">
+              <input type="checkbox" id="filterAnonymous">
+              <span class="slider"></span>
+            </label>
+          </div>
+          <div class="toggle-item">
+            <label class="toggle-label" for="filterNoTrack">✉️ 追跡なしサービスも含める</label>
+            <label class="switch">
+              <input type="checkbox" id="filterNoTrack">
+              <span class="slider"></span>
+            </label>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 右ペイン: 判定結果一覧 -->
+    <section class="results-pane">
+      <div id="bestChoiceContainer"></div>
+      <div class="results-container" id="resultsList">
+        <div class="card" style="text-align: center; padding: 3rem 1rem; color: var(--text-muted);">
+          <div style="font-size: 2.5rem; margin-bottom: 0.5rem;">📐</div>
+          <p>左側のフォームにサイズと重量を入力するか、定番プリセットを選択してください。</p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <p><strong>FurimaPostCalc</strong> — メルカリ・フリマ専用：送料・梱包サイズ判定ツール (v1.1.0)</p>
+    <p style="margin-top: 0.35rem;">
+      料金・規格データ：2026年10月1日以降適用分を基準（改訂確認日: 2026-09-15）。<br>
+      本ツールは配送方法選択の参考情報を提供するものです。実際の受付可否、基本送料、専用資材費、サイズ・重量判定は、発送時点の各社公式規定、店舗の店頭価格、および受付窓口での計測結果が優先されます。
+    </p>
+    <div class="footer-links">
+      <a href="https://help.jp.mercari.com/guide/articles/518/" target="_blank" rel="noopener">メルカリ公式 配送方法</a>
+      <a href="https://www.post.japanpost.jp/service/clickpost/" target="_blank" rel="noopener">日本郵便 クリックポスト</a>
+      <a href="https://www.kuronekoyamato.co.jp/ytc/customer/send/services/rakuraku/" target="_blank" rel="noopener">ヤマト運輸 らくらくメルカリ便</a>
+      <a href="test.html" style="color: var(--accent-emerald);">🧪 自動テストランナー (TC-001〜TC-026)</a>
+    </div>
+  </footer>
+
+  <script src="js/data.js"></script>
+  <script src="js/calc.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
