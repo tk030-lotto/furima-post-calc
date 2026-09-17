@@ -235,11 +235,23 @@
       if (isPass) pCount++; else fCount++;
 
       const tr = document.createElement('tr');
-      tr.innerHTML = `
-        <td class="id-cell">${t.id}</td>
-        <td>${t.name}</td>
-        <td><span class="badge ${isPass ? 'badge-pass' : 'badge-fail'}">${isPass ? 'PASS' : 'FAIL'}</span></td>
-      `;
+      
+      const tdId = document.createElement('td');
+      tdId.className = 'id-cell';
+      tdId.textContent = t.id;
+      tr.appendChild(tdId);
+
+      const tdName = document.createElement('td');
+      tdName.textContent = t.name;
+      tr.appendChild(tdName);
+
+      const tdResult = document.createElement('td');
+      const badge = document.createElement('span');
+      badge.className = 'badge ' + (isPass ? 'badge-pass' : 'badge-fail');
+      badge.textContent = isPass ? 'PASS' : 'FAIL';
+      tdResult.appendChild(badge);
+      tr.appendChild(tdResult);
+
       tbody.appendChild(tr);
     });
 
