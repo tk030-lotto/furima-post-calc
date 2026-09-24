@@ -1,6 +1,9 @@
 # FurimaPostCalc
 ## メルカリ・フリマ専用：送料・梱包サイズ判定ツール
 
+> 🚀 **Web版URL（インストール不要ですぐに使えます）:**  
+> [https://tk030-lotto.github.io/furima-post-calc/](https://tk030-lotto.github.io/furima-post-calc/)
+
 商品の梱包後サイズと重量を入力するだけで、利用可能な配送方法を比較し、**必須専用資材を含めた実質総額**の安い順に表示するブラウザツールです。
 
 外部ライブラリ・外部APIに依存せず、ブラウザだけで動作します。
